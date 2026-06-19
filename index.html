@@ -461,10 +461,14 @@
 
             /*
              * チャットウィンドウが開いたとき、まだ事前メニューを送っていなければ
-             * オーバーレイを表示する
+             * オーバーレイを表示する。
+             * isPrechatSubmitted が true の場合（選択肢選択後）は表示しない。
              */
             if (!isPrechatSubmitted) {
-                showPrechatOverlay();
+                // 少し遅延させてiframeが完全に表示されてからオーバーレイを出す
+                window.setTimeout(showPrechatOverlay, 100);
+            } else {
+                hidePrechatOverlay();
             }
         });
 
@@ -632,6 +636,10 @@
         function sendPrechatMessage(message) {
             if (!message) return;
 
+            // 送信前にフラグを立てて即座にオーバーレイを閉じる
+            isPrechatSubmitted = true;
+            hidePrechatOverlay();
+
             if (
                 window.embeddedservice_bootstrap &&
                 window.embeddedservice_bootstrap.utilAPI &&
@@ -640,14 +648,17 @@
                 window.embeddedservice_bootstrap.utilAPI.sendTextMessage(message)
                     .then(function () {
                         console.log('Prechat message sent:', message);
-                        isPrechatSubmitted = true;
-                        hidePrechatOverlay();
                     })
                     .catch(function (err) {
                         console.error('sendTextMessage failed:', err);
+                        // 失敗した場合はフラグを戻してオーバーレイを再表示
+                        isPrechatSubmitted = false;
+                        showPrechatOverlay();
                     });
             } else {
                 console.warn('sendTextMessage API is not available.');
+                isPrechatSubmitted = false;
+                showPrechatOverlay();
             }
         }
     </script>

@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8" />
+    <title>Salesforce Chat Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            background: linear-gradient(135deg, #f7fbff, #ffffff);
+        }
+
+        .page {
+            padding: 48px;
+        }
+
+        /* ── カスタムチャットランチャー ── */
+        .custom-chat-launcher {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 100000;
+            width: 72px;
+            height: 72px;
+        }
+
+        .custom-chat-launcher-hidden {
+            display: none;
+        }
+
+        .bubble {
+            position: absolute;
+            right: -8px;
+            bottom: 76px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 210px;
+            padding: 8px 16px;
+            border: 1.5px solid #EF4B5F;
+            border-radius: 999px;
+            background: #FFFFFF;
+            color: #333333;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.4;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+        }
+
+        .bubble::after {
+            content: "";
+            position: absolute;
+            right: 28px;
+            bottom: -6px;
+            width: 10px;
+            height: 10px;
+            background: #FFFFFF;
+            border-right: 1.5px solid #EF4B5F;
+            border-bottom: 1.5px solid #EF4B5F;
+            transform: rotate(45deg);
+        }
+
+        .robot-button {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 72px;
+            height: 72px;
+            border: none;
+            border-radius: 50%;
+            background: #FFFFFF;
+            padding: 4px;
+            margin: 0;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .robot-image {
+            display: block;
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 50%;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.22));
+            transition: transform 0.12s ease, filter 0.12s ease;
+        }
+
+        .robot-button:hover .robot-image {
+            transform: translateY(-1px);
+            filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.26));
+        }
+
+        .robot-button:active .robot-image {
+            transform: translateY(0);
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
+        }
+
+        /* ── 事前メニューオーバーレイ ── */
+        #prechatOverlay {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            z-index: 99999;
+
+            /* Embedded Messaging iframeのサイズに合わせる */
+            width: 400px;
+            height: 520px;
+
+            background: #FFFFFF;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.16);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #prechatOverlay.visible {
+            display: flex;
+        }
+
+        .prechat-header {
+            background: #EF4B5F;
+            color: #FFFFFF;
+            padding: 16px 20px;
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .prechat-header-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .prechat-body {
+            flex: 1;
+            padding: 20px 16px 8px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .prechat-greeting {
+            font-size: 14px;
+            font-weight: 700;
+            color: #222222;
+            margin-bottom: 4px;
+        }
+
+        .prechat-sub {
+            font-size: 12px;
+            color: #666666;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .prechat-choice-btn {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1.5px solid #E8E8E8;
+            border-radius: 8px;
+            background: #FFFFFF;
+            color: #222222;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.12s, border-color 0.12s;
+        }
+
+        .prechat-choice-btn:hover {
+            background: #FFF5F6;
+            border-color: #EF4B5F;
+            color: #EF4B5F;
+        }
+
+        .prechat-choice-btn .btn-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .prechat-footer {
+            padding: 10px 16px 16px;
+            flex-shrink: 0;
+        }
+
+        .prechat-input-wrap {
+            display: flex;
+            align-items: center;
+            border: 1.5px solid #E8E8E8;
+            border-radius: 999px;
+            padding: 8px 8px 8px 16px;
+            gap: 8px;
+            background: #FAFAFA;
+        }
+
+        .prechat-input-wrap:focus-within {
+            border-color: #EF4B5F;
+            background: #FFFFFF;
+        }
+
+        #prechatFreeInput {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 13px;
+            color: #222222;
+        }
+
+        #prechatFreeInput::placeholder {
+            color: #AAAAAA;
+        }
+
+        .prechat-send-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #EF4B5F;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.12s;
+        }
+
+        .prechat-send-btn:hover {
+            background: #D43A4E;
+        }
+
+        .prechat-send-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: #FFFFFF;
+        }
+
+        /* モバイル対応 */
+        @media (max-width: 440px) {
+            #prechatOverlay {
+                width: 100vw;
+                right: 0;
+                border-radius: 12px 12px 0 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <h1>Salesforce Chat Test Page</h1>
+        <p>Deployment切り替え検証ページです。</p>
+        <p>確認URL：</p>
+        <ul>
+            <li><code>/?product=fire</code>：火災保険用Deployment</li>
+            <li><code>/?product=auto</code>：自動車保険用Deployment</li>
+            <li><code>/</code>：既存の共通Deployment</li>
+        </ul>
+    </div>
+
+    <!-- カスタムチャットランチャー -->
+    <div id="customChatLauncher" class="custom-chat-launcher">
+        <div id="chatBubbleText" class="bubble">何かお困りですか？</div>
+        <button
+            class="robot-button"
+            type="button"
+            onclick="openChat()"
+            aria-label="チャットを開く">
+            <img
+                class="robot-image"
+                src="./ChatBotLauncherIcon_transparent.png"
+                alt="チャット" />
+        </button>
+    </div>
+
+    <!-- 事前メニューオーバーレイ -->
+    <div id="prechatOverlay" role="dialog" aria-modal="true" aria-label="お問い合わせ内容の選択">
+        <div class="prechat-header">
+            <div class="prechat-header-icon">🤖</div>
+            <span>お客様サポートボット【仮】</span>
+        </div>
+        <div class="prechat-body" id="prechatBody">
+            <div class="prechat-greeting">何かお困りですか？</div>
+            <div class="prechat-sub">ご用件に応じて、以下の選択肢からお選びいただくか、入力バーから入力してください。解決までご案内します。</div>
+            <!-- 選択肢ボタンはJSで動的に挿入 -->
+        </div>
+        <div class="prechat-footer">
+            <div class="prechat-input-wrap">
+                <input
+                    type="text"
+                    id="prechatFreeInput"
+                    placeholder="ご件をお聞かせください"
+                    maxlength="500"
+                    onkeydown="handleFreeInputKeydown(event)" />
+                <button class="prechat-send-btn" onclick="submitFreeInput()" aria-label="送信">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        let isEmbeddedMessagingButtonCreated = false;
+        let isEmbeddedMessagingReady = false;
+        let isChatOpen = false;
+        let isPrechatSubmitted = false;
+
+        /* ──────────────────────────────────────────
+         * Deployment設定
+         * ────────────────────────────────────────── */
+        function getProductType() {
+            const params = new URLSearchParams(window.location.search);
+            const product = params.get('product');
+            if (product === 'fire') return 'fire';
+            if (product === 'auto') return 'auto';
+            return 'default';
+        }
+
+        /*
+         * prechatMenus: ページごとの選択肢ボタン定義
+         * label  … ボタンに表示するテキスト
+         * icon   … 絵文字アイコン
+         * message… Agentforceに送信するテキスト
+         */
+        const prechatMenus = {
+            fire: [
+                { icon: '🏠', label: '住所変更', message: '住所変更の手続きをしたいです' },
+                { icon: '🌏', label: '地震保険付帯', message: '地震保険の付帯について確認したいです' },
+            ],
+            auto: [
+                { icon: '🚗', label: '車両入替', message: '車両入替の手続きをしたいです' },
+                { icon: '📄', label: '証券再発行', message: '証券の再発行をお願いしたいです' },
+            ],
+            default: [
+                { icon: '📋', label: '事故・保険請求のご連絡', message: '事故・保険請求の連絡をしたいです' },
+                { icon: '🚗', label: '自動車保険の各種お手続き', message: '自動車保険の手続きについて確認したいです' },
+                { icon: '🔧', label: '自動車保険以外の各種お手続き', message: '自動車保険以外の手続きについて確認したいです' },
+                { icon: '❓', label: '保険に関するご質問', message: '保険について質問があります' },
+                { icon: '💬', label: 'ご意見・ご要望', message: 'ご意見・ご要望をお伝えしたいです' },
+            ],
+        };
+
+        function getDeploymentConfig() {
+            const productType = getProductType();
+
+            if (productType === 'fire') {
+                return {
+                    productType: 'fire',
+                    bubbleText: '火災保険のお手続きでしょうか',
+                    deploymentName: 'archi_fire_test',
+                    siteUrl: 'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchifiretest1781759026666',
+                    bootstrapUrl: 'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchifiretest1781759026666/assets/js/bootstrap.min.js',
+                    scrt2URL: 'https://d5h00000141dheay--agent0507.sandbox.my.salesforce-scrt.com'
+                };
+            }
+
+            if (productType === 'auto') {
+                return {
+                    productType: 'auto',
+                    bubbleText: '自動車保険のお手続きでしょうか',
+                    deploymentName: 'archi_auto_test',
+                    siteUrl: 'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchiautotest1781762678353',
+                    bootstrapUrl: 'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchiautotest1781762678353/assets/js/bootstrap.min.js',
+                    scrt2URL: 'https://d5h00000141dheay--agent0507.sandbox.my.salesforce-scrt.com'
+                };
+            }
+
+            return {
+                productType: 'default',
+                bubbleText: '何かお困りですか？',
+                deploymentName: 'archi',
+                siteUrl: 'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220',
+                bootstrapUrl: 'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220/assets/js/bootstrap.min.js',
+                scrt2URL: 'https://d5h00000141dheay--agent0507.sandbox.my.salesforce-scrt.com'
+            };
+        }
+
+        const deploymentConfig = getDeploymentConfig();
+
+        /* ──────────────────────────────────────────
+         * 初期化
+         * ────────────────────────────────────────── */
+        document.addEventListener('DOMContentLoaded', function () {
+            setBubbleText();
+            buildPrechatButtons();
+            loadEmbeddedMessagingScript();
+        });
+
+        function setBubbleText() {
+            const bubble = document.getElementById('chatBubbleText');
+            if (bubble) bubble.textContent = deploymentConfig.bubbleText;
+            console.log('ProductType:', deploymentConfig.productType);
+        }
+
+        /*
+         * ページ（productType）に応じた選択肢ボタンをDOMに挿入する
+         */
+        function buildPrechatButtons() {
+            const body = document.getElementById('prechatBody');
+            const menus = prechatMenus[deploymentConfig.productType] || prechatMenus.default;
+
+            menus.forEach(function (item) {
+                const btn = document.createElement('button');
+                btn.className = 'prechat-choice-btn';
+                btn.innerHTML =
+                    '<span class="btn-icon">' + item.icon + '</span>' +
+                    '<span>' + item.label + '</span>';
+                btn.addEventListener('click', function () {
+                    submitChoice(item.message);
+                });
+                body.appendChild(btn);
+            });
+        }
+
+        /* ──────────────────────────────────────────
+         * Embedded Messaging イベントリスナー
+         * ────────────────────────────────────────── */
+        window.addEventListener('onEmbeddedMessagingButtonCreated', function () {
+            console.log('Embedded Messaging button created.');
+            isEmbeddedMessagingButtonCreated = true;
+            hideStandardChatButton();
+            window.setTimeout(hideStandardChatButton, 500);
+        });
+
+        window.addEventListener('onEmbeddedMessagingReady', function () {
+            console.log('Embedded Messaging API is ready.');
+            isEmbeddedMessagingReady = true;
+            hideStandardChatButton();
+        });
+
+        window.addEventListener('onEmbeddedMessagingWindowMaximized', function () {
+            console.log('Embedded Messaging window maximized.');
+            isChatOpen = true;
+            hideCustomChatLauncher();
+            hideStandardChatButton();
+
+            /*
+             * チャットウィンドウが開いたとき、まだ事前メニューを送っていなければ
+             * オーバーレイを表示する
+             */
+            if (!isPrechatSubmitted) {
+                showPrechatOverlay();
+            }
+        });
+
+        window.addEventListener('onEmbeddedMessagingWindowMinimized', function () {
+            console.log('Embedded Messaging window minimized.');
+            isChatOpen = false;
+            hidePrechatOverlay();
+            showCustomChatLauncher();
+            window.setTimeout(hideStandardChatButton, 100);
+            window.setTimeout(hideStandardChatButton, 500);
+        });
+
+        window.addEventListener('onEmbeddedMessagingWindowClosed', function () {
+            console.log('Embedded Messaging window closed.');
+            isChatOpen = false;
+            isPrechatSubmitted = false; // 閉じたらリセット（再開時にまた表示）
+            hidePrechatOverlay();
+            showCustomChatLauncher();
+            window.setTimeout(hideStandardChatButton, 100);
+            window.setTimeout(hideStandardChatButton, 500);
+        });
+
+        /* ──────────────────────────────────────────
+         * Embedded Messaging 初期化
+         * ────────────────────────────────────────── */
+        function initEmbeddedMessaging() {
+            try {
+                console.log('initEmbeddedMessaging start');
+                embeddedservice_bootstrap.settings.language = 'ja';
+                embeddedservice_bootstrap.init(
+                    '00DIl000000H31Y',
+                    deploymentConfig.deploymentName,
+                    deploymentConfig.siteUrl,
+                    { scrt2URL: deploymentConfig.scrt2URL }
+                );
+                console.log('initEmbeddedMessaging called');
+            } catch (err) {
+                console.error('Error loading Embedded Messaging: ', err);
+            }
+        }
+
+        function loadEmbeddedMessagingScript() {
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = deploymentConfig.bootstrapUrl;
+            script.onload = initEmbeddedMessaging;
+            script.onerror = function () {
+                console.error('Failed to load bootstrap script:', deploymentConfig.bootstrapUrl);
+            };
+            document.body.appendChild(script);
+        }
+
+        /* ──────────────────────────────────────────
+         * UI表示・非表示ヘルパー
+         * ────────────────────────────────────────── */
+        function hideStandardChatButton() {
+            try {
+                if (
+                    window.embeddedservice_bootstrap &&
+                    window.embeddedservice_bootstrap.utilAPI &&
+                    typeof window.embeddedservice_bootstrap.utilAPI.hideChatButton === 'function'
+                ) {
+                    const result = window.embeddedservice_bootstrap.utilAPI.hideChatButton();
+                    if (result && typeof result.then === 'function') {
+                        result
+                            .then(function () { console.log('Standard chat button hidden.'); })
+                            .catch(function (err) { console.warn('hideChatButton failed:', err); });
+                    }
+                }
+            } catch (err) {
+                console.warn('hideStandardChatButton failed:', err);
+            }
+        }
+
+        function hideCustomChatLauncher() {
+            const el = document.getElementById('customChatLauncher');
+            if (el) el.classList.add('custom-chat-launcher-hidden');
+        }
+
+        function showCustomChatLauncher() {
+            const el = document.getElementById('customChatLauncher');
+            if (el) el.classList.remove('custom-chat-launcher-hidden');
+        }
+
+        function showPrechatOverlay() {
+            const el = document.getElementById('prechatOverlay');
+            if (el) {
+                el.classList.add('visible');
+                // 自由入力欄にフォーカス
+                window.setTimeout(function () {
+                    const input = document.getElementById('prechatFreeInput');
+                    if (input) input.focus();
+                }, 100);
+            }
+            console.log('Prechat overlay shown.');
+        }
+
+        function hidePrechatOverlay() {
+            const el = document.getElementById('prechatOverlay');
+            if (el) el.classList.remove('visible');
+            console.log('Prechat overlay hidden.');
+        }
+
+        /* ──────────────────────────────────────────
+         * チャット起動
+         * ────────────────────────────────────────── */
+        function openChat() {
+            console.log('openChat clicked');
+
+            if (
+                window.embeddedservice_bootstrap &&
+                window.embeddedservice_bootstrap.utilAPI &&
+                typeof window.embeddedservice_bootstrap.utilAPI.launchChat === 'function'
+            ) {
+                window.embeddedservice_bootstrap.utilAPI.launchChat()
+                    .then(function () {
+                        console.log('Chat launched.');
+                        isChatOpen = true;
+                        hideCustomChatLauncher();
+                        hideStandardChatButton();
+                        // onEmbeddedMessagingWindowMaximized でオーバーレイ表示
+                    })
+                    .catch(function (err) {
+                        console.error('launchChat failed:', err);
+                    });
+            } else {
+                console.warn('launchChat API is not ready yet.');
+            }
+        }
+
+        /* ──────────────────────────────────────────
+         * 事前メニュー送信
+         * ────────────────────────────────────────── */
+
+        /*
+         * 選択肢ボタンをクリックしたとき
+         */
+        function submitChoice(message) {
+            console.log('submitChoice:', message);
+            sendPrechatMessage(message);
+        }
+
+        /*
+         * 自由入力をEnterまたは送信ボタンで送信
+         */
+        function handleFreeInputKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                submitFreeInput();
+            }
+        }
+
+        function submitFreeInput() {
+            const input = document.getElementById('prechatFreeInput');
+            if (!input) return;
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            sendPrechatMessage(text);
+        }
+
+        /*
+         * Agentforceにメッセージを送信してオーバーレイを閉じる
+         */
+        function sendPrechatMessage(message) {
+            if (!message) return;
+
+            if (
+                window.embeddedservice_bootstrap &&
+                window.embeddedservice_bootstrap.utilAPI &&
+                typeof window.embeddedservice_bootstrap.utilAPI.sendTextMessage === 'function'
+            ) {
+                window.embeddedservice_bootstrap.utilAPI.sendTextMessage(message)
+                    .then(function () {
+                        console.log('Prechat message sent:', message);
+                        isPrechatSubmitted = true;
+                        hidePrechatOverlay();
+                    })
+                    .catch(function (err) {
+                        console.error('sendTextMessage failed:', err);
+                    });
+            } else {
+                console.warn('sendTextMessage API is not available.');
+            }
+        }
+    </script>
+</body>
+</html>

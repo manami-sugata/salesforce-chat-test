@@ -13,11 +13,8 @@
             background: linear-gradient(135deg, #f7fbff, #ffffff);
         }
 
-        .page {
-            padding: 48px;
-        }
+        .page { padding: 48px; }
 
-        /* ── カスタムチャットランチャー ── */
         .custom-chat-launcher {
             position: fixed;
             right: 24px;
@@ -27,9 +24,7 @@
             height: 72px;
         }
 
-        .custom-chat-launcher-hidden {
-            display: none;
-        }
+        .custom-chat-launcher-hidden { display: none; }
 
         .bubble {
             position: absolute;
@@ -48,7 +43,7 @@
             font-weight: 700;
             line-height: 1.4;
             white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.14);
         }
 
         .bubble::after {
@@ -88,18 +83,18 @@
             height: 64px;
             object-fit: cover;
             border-radius: 50%;
-            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.22));
+            filter: drop-shadow(0 6px 14px rgba(0,0,0,0.22));
             transition: transform 0.12s ease, filter 0.12s ease;
         }
 
         .robot-button:hover .robot-image {
             transform: translateY(-1px);
-            filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.26));
+            filter: drop-shadow(0 8px 18px rgba(0,0,0,0.26));
         }
 
         .robot-button:active .robot-image {
             transform: translateY(0);
-            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.22));
         }
 
         /* ── 事前メニューオーバーレイ ── */
@@ -109,22 +104,16 @@
             bottom: 0;
             right: 0;
             z-index: 99999;
-
-            /* Embedded Messaging iframeのサイズに合わせる */
             width: 400px;
             height: 520px;
-
             background: #FFFFFF;
             border-radius: 12px 12px 0 0;
-            box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.16);
-            display: none;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.16);
             flex-direction: column;
             overflow: hidden;
         }
 
-        #prechatOverlay.visible {
-            display: flex;
-        }
+        #prechatOverlay.visible { display: flex; }
 
         .prechat-header {
             background: #EF4B5F;
@@ -196,10 +185,7 @@
             color: #EF4B5F;
         }
 
-        .prechat-choice-btn .btn-icon {
-            font-size: 16px;
-            flex-shrink: 0;
-        }
+        .prechat-choice-btn .btn-icon { font-size: 16px; flex-shrink: 0; }
 
         .prechat-footer {
             padding: 10px 16px 16px;
@@ -230,9 +216,7 @@
             color: #222222;
         }
 
-        #prechatFreeInput::placeholder {
-            color: #AAAAAA;
-        }
+        #prechatFreeInput::placeholder { color: #AAAAAA; }
 
         .prechat-send-btn {
             width: 36px;
@@ -248,23 +232,12 @@
             transition: background 0.12s;
         }
 
-        .prechat-send-btn:hover {
-            background: #D43A4E;
-        }
+        .prechat-send-btn:hover { background: #D43A4E; }
 
-        .prechat-send-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: #FFFFFF;
-        }
+        .prechat-send-btn svg { width: 16px; height: 16px; fill: #FFFFFF; }
 
-        /* モバイル対応 */
         @media (max-width: 440px) {
-            #prechatOverlay {
-                width: 100vw;
-                right: 0;
-                border-radius: 12px 12px 0 0;
-            }
+            #prechatOverlay { width: 100vw; right: 0; border-radius: 12px 12px 0 0; }
         }
     </style>
 </head>
@@ -281,22 +254,13 @@
         </ul>
     </div>
 
-    <!-- カスタムチャットランチャー -->
     <div id="customChatLauncher" class="custom-chat-launcher">
         <div id="chatBubbleText" class="bubble">何かお困りですか？</div>
-        <button
-            class="robot-button"
-            type="button"
-            onclick="openChat()"
-            aria-label="チャットを開く">
-            <img
-                class="robot-image"
-                src="./ChatBotLauncherIcon_transparent.png"
-                alt="チャット" />
+        <button class="robot-button" type="button" onclick="openChat()" aria-label="チャットを開く">
+            <img class="robot-image" src="./ChatBotLauncherIcon_transparent.png" alt="チャット" />
         </button>
     </div>
 
-    <!-- 事前メニューオーバーレイ -->
     <div id="prechatOverlay" role="dialog" aria-modal="true" aria-label="お問い合わせ内容の選択">
         <div class="prechat-header">
             <div class="prechat-header-icon">🤖</div>
@@ -305,7 +269,6 @@
         <div class="prechat-body" id="prechatBody">
             <div class="prechat-greeting">何かお困りですか？</div>
             <div class="prechat-sub">ご用件に応じて、以下の選択肢からお選びいただくか、入力バーから入力してください。解決までご案内します。</div>
-            <!-- 選択肢ボタンはJSで動的に挿入 -->
         </div>
         <div class="prechat-footer">
             <div class="prechat-input-wrap">
@@ -328,11 +291,21 @@
         let isEmbeddedMessagingButtonCreated = false;
         let isEmbeddedMessagingReady = false;
         let isChatOpen = false;
+
+        /*
+         * isPrechatSubmitted:
+         * true = 選択肢またはフリー入力を送信済み → オーバーレイを出さない
+         * false = 未送信 → チャット開いたらオーバーレイを出す
+         */
         let isPrechatSubmitted = false;
 
-        /* ──────────────────────────────────────────
-         * Deployment設定
-         * ────────────────────────────────────────── */
+        /*
+         * prechatOverlayVisible:
+         * オーバーレイが現在表示中かどうかのフラグ。
+         * sendTextMessage後にMaximizedが再発火しても二重表示しないために使う。
+         */
+        let prechatOverlayVisible = false;
+
         function getProductType() {
             const params = new URLSearchParams(window.location.search);
             const product = params.get('product');
@@ -341,12 +314,6 @@
             return 'default';
         }
 
-        /*
-         * prechatMenus: ページごとの選択肢ボタン定義
-         * label  … ボタンに表示するテキスト
-         * icon   … 絵文字アイコン
-         * message… Agentforceに送信するテキスト
-         */
         const prechatMenus = {
             fire: [
                 { icon: '🏠', label: '住所変更', message: '住所変更の手続きをしたいです' },
@@ -402,9 +369,6 @@
 
         const deploymentConfig = getDeploymentConfig();
 
-        /* ──────────────────────────────────────────
-         * 初期化
-         * ────────────────────────────────────────── */
         document.addEventListener('DOMContentLoaded', function () {
             setBubbleText();
             buildPrechatButtons();
@@ -417,13 +381,9 @@
             console.log('ProductType:', deploymentConfig.productType);
         }
 
-        /*
-         * ページ（productType）に応じた選択肢ボタンをDOMに挿入する
-         */
         function buildPrechatButtons() {
             const body = document.getElementById('prechatBody');
             const menus = prechatMenus[deploymentConfig.productType] || prechatMenus.default;
-
             menus.forEach(function (item) {
                 const btn = document.createElement('button');
                 btn.className = 'prechat-choice-btn';
@@ -437,9 +397,8 @@
             });
         }
 
-        /* ──────────────────────────────────────────
-         * Embedded Messaging イベントリスナー
-         * ────────────────────────────────────────── */
+        /* ── イベントリスナー ── */
+
         window.addEventListener('onEmbeddedMessagingButtonCreated', function () {
             console.log('Embedded Messaging button created.');
             isEmbeddedMessagingButtonCreated = true;
@@ -454,21 +413,18 @@
         });
 
         window.addEventListener('onEmbeddedMessagingWindowMaximized', function () {
-            console.log('Embedded Messaging window maximized.');
+            console.log('Embedded Messaging window maximized. isPrechatSubmitted:', isPrechatSubmitted);
             isChatOpen = true;
             hideCustomChatLauncher();
             hideStandardChatButton();
 
             /*
-             * チャットウィンドウが開いたとき、まだ事前メニューを送っていなければ
-             * オーバーレイを表示する。
-             * isPrechatSubmitted が true の場合（選択肢選択後）は表示しない。
+             * isPrechatSubmitted が false のときだけオーバーレイを表示する。
+             * sendTextMessage後にこのイベントが再発火しても
+             * isPrechatSubmitted=true になっているので表示しない。
              */
             if (!isPrechatSubmitted) {
-                // 少し遅延させてiframeが完全に表示されてからオーバーレイを出す
-                window.setTimeout(showPrechatOverlay, 100);
-            } else {
-                hidePrechatOverlay();
+                showPrechatOverlay();
             }
         });
 
@@ -484,16 +440,15 @@
         window.addEventListener('onEmbeddedMessagingWindowClosed', function () {
             console.log('Embedded Messaging window closed.');
             isChatOpen = false;
-            isPrechatSubmitted = false; // 閉じたらリセット（再開時にまた表示）
+            isPrechatSubmitted = false;
             hidePrechatOverlay();
             showCustomChatLauncher();
             window.setTimeout(hideStandardChatButton, 100);
             window.setTimeout(hideStandardChatButton, 500);
         });
 
-        /* ──────────────────────────────────────────
-         * Embedded Messaging 初期化
-         * ────────────────────────────────────────── */
+        /* ── 初期化 ── */
+
         function initEmbeddedMessaging() {
             try {
                 console.log('initEmbeddedMessaging start');
@@ -521,9 +476,8 @@
             document.body.appendChild(script);
         }
 
-        /* ──────────────────────────────────────────
-         * UI表示・非表示ヘルパー
-         * ────────────────────────────────────────── */
+        /* ── UI ヘルパー ── */
+
         function hideStandardChatButton() {
             try {
                 if (
@@ -554,10 +508,11 @@
         }
 
         function showPrechatOverlay() {
+            if (isPrechatSubmitted) return; // 送信済みなら絶対に表示しない
             const el = document.getElementById('prechatOverlay');
             if (el) {
                 el.classList.add('visible');
-                // 自由入力欄にフォーカス
+                prechatOverlayVisible = true;
                 window.setTimeout(function () {
                     const input = document.getElementById('prechatFreeInput');
                     if (input) input.focus();
@@ -568,16 +523,17 @@
 
         function hidePrechatOverlay() {
             const el = document.getElementById('prechatOverlay');
-            if (el) el.classList.remove('visible');
+            if (el) {
+                el.classList.remove('visible');
+                prechatOverlayVisible = false;
+            }
             console.log('Prechat overlay hidden.');
         }
 
-        /* ──────────────────────────────────────────
-         * チャット起動
-         * ────────────────────────────────────────── */
+        /* ── チャット起動 ── */
+
         function openChat() {
             console.log('openChat clicked');
-
             if (
                 window.embeddedservice_bootstrap &&
                 window.embeddedservice_bootstrap.utilAPI &&
@@ -589,7 +545,6 @@
                         isChatOpen = true;
                         hideCustomChatLauncher();
                         hideStandardChatButton();
-                        // onEmbeddedMessagingWindowMaximized でオーバーレイ表示
                     })
                     .catch(function (err) {
                         console.error('launchChat failed:', err);
@@ -599,21 +554,13 @@
             }
         }
 
-        /* ──────────────────────────────────────────
-         * 事前メニュー送信
-         * ────────────────────────────────────────── */
+        /* ── 事前メニュー送信 ── */
 
-        /*
-         * 選択肢ボタンをクリックしたとき
-         */
         function submitChoice(message) {
             console.log('submitChoice:', message);
             sendPrechatMessage(message);
         }
 
-        /*
-         * 自由入力をEnterまたは送信ボタンで送信
-         */
         function handleFreeInputKeydown(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -630,13 +577,14 @@
             sendPrechatMessage(text);
         }
 
-        /*
-         * Agentforceにメッセージを送信してオーバーレイを閉じる
-         */
         function sendPrechatMessage(message) {
             if (!message) return;
 
-            // 送信前にフラグを立てて即座にオーバーレイを閉じる
+            /*
+             * フラグを立てて即座にオーバーレイを閉じる。
+             * この後 sendTextMessage が onEmbeddedMessagingWindowMaximized を
+             * 再発火させても isPrechatSubmitted=true なので showPrechatOverlay は実行されない。
+             */
             isPrechatSubmitted = true;
             hidePrechatOverlay();
 
@@ -653,12 +601,12 @@
                         console.error('sendTextMessage failed:', err);
                         // 失敗した場合はフラグを戻してオーバーレイを再表示
                         isPrechatSubmitted = false;
-                        showPrechatOverlay();
+                        if (isChatOpen) showPrechatOverlay();
                     });
             } else {
                 console.warn('sendTextMessage API is not available.');
                 isPrechatSubmitted = false;
-                showPrechatOverlay();
+                if (isChatOpen) showPrechatOverlay();
             }
         }
     </script>

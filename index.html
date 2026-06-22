@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-  <title>Agentforce Chat Menu Test</title>
+  <title>Agentforce Chat Test</title>
 
   <style>
     body {
@@ -26,315 +26,30 @@
       border-radius: 16px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
     }
-
-    .sample-card h1 {
-      margin: 0 0 12px;
-      font-size: 24px;
-    }
-
-    .sample-card p {
-      line-height: 1.7;
-      color: #444;
-    }
-
-    /* Salesforce標準ボタンは隠す前提。念のため画面上に残った場合も邪魔しない */
-    .custom-chat-launcher {
-      position: fixed;
-      right: 24px;
-      bottom: 24px;
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      border: none;
-      background: #ffffff;
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.25);
-      cursor: pointer;
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-    }
-
-    .custom-chat-launcher img {
-      width: 52px;
-      height: 52px;
-      object-fit: contain;
-    }
-
-    .chat-menu-panel {
-      position: fixed;
-      right: 24px;
-      bottom: 108px;
-      width: 340px;
-      max-width: calc(100vw - 48px);
-      background: #ffffff;
-      border-radius: 18px;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
-      z-index: 9998;
-      overflow: hidden;
-      display: none;
-    }
-
-    .chat-menu-panel.is-open {
-      display: block;
-    }
-
-    .chat-menu-header {
-      padding: 18px 18px 12px;
-      border-bottom: 1px solid #eeeeee;
-      position: relative;
-    }
-
-    .chat-menu-title {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 700;
-      color: #222;
-      padding-right: 32px;
-    }
-
-    .chat-menu-subtitle {
-      margin: 8px 0 0;
-      font-size: 13px;
-      line-height: 1.5;
-      color: #666;
-    }
-
-    .chat-menu-close {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 28px;
-      height: 28px;
-      border: none;
-      background: transparent;
-      font-size: 22px;
-      line-height: 1;
-      cursor: pointer;
-      color: #666;
-    }
-
-    .chat-menu-body {
-      padding: 14px 16px 16px;
-    }
-
-    .chat-menu-option {
-      width: 100%;
-      min-height: 44px;
-      margin: 0 0 10px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid #d8dde6;
-      background: #ffffff;
-      cursor: pointer;
-      text-align: center;
-      font-size: 14px;
-      color: #222;
-    }
-
-    .chat-menu-option:hover {
-      background: #f4f6f9;
-    }
-
-    .free-input-wrap {
-      margin-top: 14px;
-      border-top: 1px solid #eeeeee;
-      padding-top: 14px;
-    }
-
-    .free-input-label {
-      display: block;
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 6px;
-    }
-
-    .free-input-row {
-      display: flex;
-      gap: 8px;
-    }
-
-    .free-input {
-      flex: 1;
-      min-width: 0;
-      height: 38px;
-      border: 1px solid #d8dde6;
-      border-radius: 20px;
-      padding: 0 12px;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-
-    .free-input-send {
-      width: 64px;
-      border: none;
-      border-radius: 20px;
-      background: #0176d3;
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .free-input-send:disabled,
-    .chat-menu-option:disabled,
-    .custom-chat-launcher:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    .chat-menu-status {
-      min-height: 18px;
-      margin-top: 10px;
-      font-size: 12px;
-      color: #666;
-    }
   </style>
 </head>
 
 <body>
   <main class="page">
     <section class="sample-card">
-      <h1>Agentforce チャットメニュー検証</h1>
+      <h1>Agentforce チャット検証</h1>
       <p>
-        URLパラメータで表示メニューを切り替えます。<br>
-        <strong>?menu=auto</strong>：自動車メニュー<br>
-        <strong>?menu=fire</strong>：火災メニュー<br>
-        <strong>?menu=common</strong>：共通メニュー
+        外部メニューUIを外し、Deployment切替だけ残した状態です。<br>
+        ?product=auto / ?product=fire で読み込むDeploymentを切り替えます。
       </p>
     </section>
   </main>
 
-  <!-- 独自メニューパネル -->
-  <div id="chatMenuPanel" class="chat-menu-panel" aria-hidden="true">
-    <div class="chat-menu-header">
-      <p id="chatMenuTitle" class="chat-menu-title">何かお困りですか？</p>
-      <p id="chatMenuSubtitle" class="chat-menu-subtitle">ご希望の内容を選択、または入力してください。</p>
-      <button id="chatMenuClose" class="chat-menu-close" type="button" aria-label="閉じる">×</button>
-    </div>
-
-    <div class="chat-menu-body">
-      <div id="chatMenuOptions"></div>
-
-      <div class="free-input-wrap">
-        <label class="free-input-label" for="freeInput">自由入力もできます</label>
-        <div class="free-input-row">
-          <input id="freeInput" class="free-input" type="text" placeholder="ご用件を入力" />
-          <button id="freeInputSend" class="free-input-send" type="button">送信</button>
-        </div>
-        <div id="chatMenuStatus" class="chat-menu-status"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 独自ランチャー -->
-  <button id="customChatLauncher" class="custom-chat-launcher" type="button" aria-label="チャットを開く">
-    <img src="./ChatBotLauncherIcon_transparent.png" alt="" />
-  </button>
-
   <script>
-    /************************************************************
-     * 1. メニュー定義
-     ************************************************************/
-    const CHAT_MENUS = {
-      auto: {
-        title: "自動車保険のお手続きでしょうか？",
-        subtitle: "ご希望の内容を選択、または入力してください。",
-        options: [
-          {
-            label: "車両入替",
-            message: "【初期メニュー選択】自動車保険：車両入替を希望します。"
-          },
-          {
-            label: "証券再発行",
-            message: "【初期メニュー選択】自動車保険：証券再発行を希望します。"
-          },
-          {
-            label: "契約内容変更",
-            message: "【初期メニュー選択】自動車保険：契約内容変更を希望します。"
-          },
-          {
-            label: "その他のお手続き",
-            message: "【初期メニュー選択】自動車保険：その他の手続きを希望します。"
-          }
-        ]
-      },
-
-      fire: {
-        title: "火災保険のお手続きでしょうか？",
-        subtitle: "ご希望の内容を選択、または入力してください。",
-        options: [
-          {
-            label: "住所変更",
-            message: "【初期メニュー選択】火災保険：住所変更を希望します。"
-          },
-          {
-            label: "地震保険の付帯",
-            message: "【初期メニュー選択】火災保険：地震保険の付帯について相談したいです。"
-          },
-          {
-            label: "契約内容変更",
-            message: "【初期メニュー選択】火災保険：契約内容変更を希望します。"
-          },
-          {
-            label: "その他のお手続き",
-            message: "【初期メニュー選択】火災保険：その他の手続きを希望します。"
-          }
-        ]
-      },
-
-      common: {
-        title: "何かお困りですか？",
-        subtitle: "ご希望の内容を選択、または入力してください。",
-        options: [
-          {
-            label: "事故・保険金請求のご連絡",
-            message: "【初期メニュー選択】事故・保険金請求のご連絡を希望します。"
-          },
-          {
-            label: "自動車保険の各種お手続き",
-            message: "【初期メニュー選択】自動車保険の各種お手続きを希望します。"
-          },
-          {
-            label: "自動車保険以外の各種お手続き",
-            message: "【初期メニュー選択】自動車保険以外の各種お手続きを希望します。"
-          },
-          {
-            label: "保険に関するご質問",
-            message: "【初期メニュー選択】保険に関する質問があります。"
-          },
-          {
-            label: "ご意見・ご要望",
-            message: "【初期メニュー選択】意見・要望を伝えたいです。"
-          }
-        ]
-      }
-    };
-
-    /************************************************************
-     * 2. Deployment定義
-     *    既存の auto / fire / default を読み分け
-     ************************************************************/
-    function getUrlParam(name) {
-      return new URLSearchParams(window.location.search).get(name);
-    }
-
-    function getMenuType() {
-      const menu = getUrlParam("menu");
-      const product = getUrlParam("product");
-
-      if (menu && CHAT_MENUS[menu]) return menu;
-      if (product === "auto") return "auto";
-      if (product === "fire") return "fire";
-      return "common";
+    function getProductType() {
+      return new URLSearchParams(window.location.search).get("product");
     }
 
     function getDeploymentConfig() {
-      const menuType = getMenuType();
+      const productType = getProductType();
 
-      if (menuType === "auto") {
+      if (productType === "auto") {
         return {
-          menuType,
           deploymentName: "archi_auto_test",
           siteUrl: "https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchiautotest1781762678353",
           bootstrapUrl: "https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchiautotest1781762678353/assets/js/bootstrap.min.js",
@@ -342,9 +57,8 @@
         };
       }
 
-      if (menuType === "fire") {
+      if (productType === "fire") {
         return {
-          menuType,
           deploymentName: "archi_fire_test",
           siteUrl: "https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchifiretest1781759026666",
           bootstrapUrl: "https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchifiretest1781759026666/assets/js/bootstrap.min.js",
@@ -353,7 +67,6 @@
       }
 
       return {
-        menuType: "common",
         deploymentName: "archi",
         siteUrl: "https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220",
         bootstrapUrl: "https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220/assets/js/bootstrap.min.js",
@@ -362,122 +75,9 @@
     }
 
     const deploymentConfig = getDeploymentConfig();
-    const currentMenu = CHAT_MENUS[deploymentConfig.menuType] || CHAT_MENUS.common;
 
-    console.log("Chat menu type:", deploymentConfig.menuType);
     console.log("Deployment:", deploymentConfig.deploymentName);
 
-    /************************************************************
-     * 3. メニュー描画
-     ************************************************************/
-    const panel = document.getElementById("chatMenuPanel");
-    const title = document.getElementById("chatMenuTitle");
-    const subtitle = document.getElementById("chatMenuSubtitle");
-    const optionsWrap = document.getElementById("chatMenuOptions");
-    const statusEl = document.getElementById("chatMenuStatus");
-    const freeInput = document.getElementById("freeInput");
-    const freeInputSend = document.getElementById("freeInputSend");
-    const launcher = document.getElementById("customChatLauncher");
-
-    function renderMenu(menu) {
-      title.textContent = menu.title;
-      subtitle.textContent = menu.subtitle;
-      optionsWrap.innerHTML = "";
-
-      menu.options.forEach((option) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "chat-menu-option";
-        button.textContent = option.label;
-        button.addEventListener("click", () => {
-          openChatAndSend(option.message);
-        });
-        optionsWrap.appendChild(button);
-      });
-    }
-
-    function openMenu() {
-      panel.classList.add("is-open");
-      panel.setAttribute("aria-hidden", "false");
-      freeInput.focus();
-    }
-
-    function closeMenu() {
-      panel.classList.remove("is-open");
-      panel.setAttribute("aria-hidden", "true");
-      statusEl.textContent = "";
-    }
-
-    function setBusy(isBusy) {
-      launcher.disabled = isBusy;
-      freeInput.disabled = isBusy;
-      freeInputSend.disabled = isBusy;
-      document.querySelectorAll(".chat-menu-option").forEach((button) => {
-        button.disabled = isBusy;
-      });
-    }
-
-    /************************************************************
-     * 4. チャット起動 + メッセージ送信
-     ************************************************************/
-    async function openChatAndSend(message) {
-      if (!message || !message.trim()) {
-        statusEl.textContent = "送信する内容を入力してください。";
-        return;
-      }
-
-      if (!window.embeddedservice_bootstrap?.utilAPI) {
-        statusEl.textContent = "チャットの読み込み中です。少し待ってから再度お試しください。";
-        return;
-      }
-
-      try {
-        setBusy(true);
-        statusEl.textContent = "チャットを起動しています...";
-
-        await embeddedservice_bootstrap.utilAPI.launchChat();
-
-        statusEl.textContent = "メッセージを送信しています...";
-
-        await embeddedservice_bootstrap.utilAPI.sendMessage(message);
-
-        closeMenu();
-      } catch (error) {
-        console.error("Failed to launch chat or send message:", error);
-        statusEl.textContent = "チャット起動またはメッセージ送信に失敗しました。";
-      } finally {
-        setBusy(false);
-      }
-    }
-
-    /************************************************************
-     * 5. イベント
-     ************************************************************/
-    renderMenu(currentMenu);
-
-    launcher.addEventListener("click", () => {
-      openMenu();
-    });
-
-    document.getElementById("chatMenuClose").addEventListener("click", () => {
-      closeMenu();
-    });
-
-    freeInputSend.addEventListener("click", () => {
-      const message = freeInput.value.trim();
-      openChatAndSend(message);
-    });
-
-    freeInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        const message = freeInput.value.trim();
-        openChatAndSend(message);
-      }
-    });
-
-    /************************************************************
-     * 6. Salesforce Embedded Messaging 初期化
-     ************************************************************/
     function initEmbeddedMessaging() {
       try {
         embeddedservice_bootstrap.settings.language = "ja";
@@ -494,15 +94,6 @@
         console.error("Error loading Embedded Messaging:", err);
       }
     }
-
-    // 標準チャットボタンを隠す
-    window.addEventListener("onEmbeddedMessagingButtonCreated", () => {
-      try {
-        embeddedservice_bootstrap.utilAPI.hideChatButton();
-      } catch (e) {
-        console.warn("Could not hide standard chat button:", e);
-      }
-    });
 
     const script = document.createElement("script");
     script.type = "text/javascript";

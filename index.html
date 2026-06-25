@@ -1,44 +1,323 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>チャットページ</title>
+    <meta charset="utf-8" />
+    <title>Salesforce Chat Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            background: linear-gradient(135deg, #f7fbff, #ffffff);
+        }
+
+        .page {
+            padding: 48px;
+        }
+
+        .custom-chat-launcher {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 100000;
+            width: 72px;
+            height: 72px;
+        }
+
+        .custom-chat-launcher-hidden {
+            display: none;
+        }
+
+        .bubble {
+            position: absolute;
+            right: -8px;
+            bottom: 76px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            min-width: 210px;
+            padding: 8px 16px;
+
+            border: 1.5px solid #EF4B5F;
+            border-radius: 999px;
+            background: #FFFFFF;
+
+            color: #333333;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.4;
+            white-space: nowrap;
+
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+        }
+
+        .bubble::after {
+            content: "";
+            position: absolute;
+            right: 28px;
+            bottom: -6px;
+
+            width: 10px;
+            height: 10px;
+
+            background: #FFFFFF;
+            border-right: 1.5px solid #EF4B5F;
+            border-bottom: 1.5px solid #EF4B5F;
+
+            transform: rotate(45deg);
+        }
+
+        .robot-button {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 72px;
+            height: 72px;
+
+            border: none;
+            border-radius: 50%;
+            background: #FFFFFF;
+
+            padding: 4px;
+            margin: 0;
+
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .robot-image {
+            display: block;
+
+            width: 64px;
+            height: 64px;
+
+            object-fit: cover;
+            border-radius: 50%;
+
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.22));
+            transition: transform 0.12s ease, filter 0.12s ease;
+        }
+
+        .robot-button:hover .robot-image {
+            transform: translateY(-1px);
+            filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.26));
+        }
+
+        .robot-button:active .robot-image {
+            transform: translateY(0);
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
+        }
+    </style>
 </head>
+
 <body>
-  <h1>チャットページ</h1>
-  <p>ここにページのコンテンツが入ります。</p>
+    <div class="page">
+        <h1>Salesforce Chat Test Page</h1>
+        <p>チャット検証ページです。</p>
+    </div>
 
-  <script type='text/javascript'>
-    function initEmbeddedMessaging() {
-      try {
-        embeddedservice_bootstrap.settings.language = 'ja';
-        embeddedservice_bootstrap.init(
-          '00DIl000000H31Y',
-          'archi',
-          'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220',
-          {
-            scrt2URL: 'https://d5h00000141dheay--agent0507.sandbox.my.salesforce-scrt.com'
-          }
-        );
-      } catch (err) {
-        console.error('Error loading Embedded Messaging: ', err);
-      }
-    };
+    <!-- カスタムチャットランチャー -->
+    <div id="customChatLauncher" class="custom-chat-launcher">
+        <div id="chatBubbleText" class="bubble">何かお困りですか？</div>
 
-    // チャットの準備ができたら遷移元情報をセット
-    window.addEventListener('onEmbeddedMessagingReady', () => {
-      const referrer = document.referrer;
-      const source = referrer.includes('/mypage') ? 'mypage' : 'other';
+        <button
+            class="robot-button"
+            type="button"
+            onclick="openChat()"
+            aria-label="チャットを開く">
+            <img
+                class="robot-image"
+                src="./ChatBotLauncherIcon_transparent.png"
+                alt="チャット" />
+        </button>
+    </div>
 
-      console.log('Referrer:', referrer || '（なし／直接アクセス）');
-      console.log('SourceCategory:', source);
+    <script type="text/javascript">
+        let isEmbeddedMessagingButtonCreated = false;
+        let isEmbeddedMessagingReady = false;
+        let isChatOpen = false;
 
-      embeddedservice_bootstrap.prechatAPI.setHiddenPrechatFields({
-        'SourceCategory': source
-      });
-    });
-  </script>
-  <script type='text/javascript' src='https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
+        // ============================================================
+        // 遷移元によって吹き出し文言を出し分ける
+        // ============================================================
+        function getSourceCategory() {
+            const referrer = document.referrer;
+            console.log('Referrer:', referrer || '（なし／直接アクセス）');
+
+            if (referrer.includes('/mypage')) {
+                return 'mypage';
+            }
+            return 'other';
+        }
+
+        function setBubbleText() {
+            const bubble = document.getElementById('chatBubbleText');
+            if (!bubble) return;
+
+            const source = getSourceCategory();
+
+            if (source === 'mypage') {
+                bubble.textContent = 'よくあるご質問はこちら';
+            } else {
+                bubble.textContent = '何かお困りですか？';
+            }
+
+            console.log('SourceCategory:', source);
+            console.log('BubbleText:', bubble.textContent);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            setBubbleText();
+            loadEmbeddedMessagingScript();
+        });
+
+        // ============================================================
+        // Embedded Messaging イベント
+        // ============================================================
+        window.addEventListener('onEmbeddedMessagingButtonCreated', function () {
+            console.log('Embedded Messaging button created.');
+            isEmbeddedMessagingButtonCreated = true;
+            hideStandardChatButton();
+            window.setTimeout(function () { hideStandardChatButton(); }, 500);
+        });
+
+        window.addEventListener('onEmbeddedMessagingReady', function () {
+            console.log('Embedded Messaging API is ready.');
+            isEmbeddedMessagingReady = true;
+
+            // SourceCategory をAgentforceに渡す
+            const source = getSourceCategory();
+            embeddedservice_bootstrap.prechatAPI.setHiddenPrechatFields({
+                'SourceCategory': source
+            });
+            console.log('setHiddenPrechatFields called with SourceCategory:', source);
+
+            hideStandardChatButton();
+        });
+
+        window.addEventListener('onEmbeddedMessagingWindowMaximized', function () {
+            console.log('Embedded Messaging window maximized.');
+            isChatOpen = true;
+            hideCustomChatLauncher();
+            hideStandardChatButton();
+        });
+
+        window.addEventListener('onEmbeddedMessagingWindowMinimized', function () {
+            console.log('Embedded Messaging window minimized.');
+            isChatOpen = false;
+            showCustomChatLauncher();
+            window.setTimeout(function () { hideStandardChatButton(); }, 100);
+            window.setTimeout(function () { hideStandardChatButton(); }, 500);
+        });
+
+        window.addEventListener('onEmbeddedMessagingWindowClosed', function () {
+            console.log('Embedded Messaging window closed.');
+            isChatOpen = false;
+            showCustomChatLauncher();
+            window.setTimeout(function () { hideStandardChatButton(); }, 100);
+            window.setTimeout(function () { hideStandardChatButton(); }, 500);
+        });
+
+        // ============================================================
+        // Embedded Messaging 初期化
+        // ============================================================
+        function initEmbeddedMessaging() {
+            try {
+                console.log('initEmbeddedMessaging start');
+                embeddedservice_bootstrap.settings.language = 'ja';
+                embeddedservice_bootstrap.init(
+                    '00DIl000000H31Y',
+                    'archi',
+                    'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220',
+                    {
+                        scrt2URL: 'https://d5h00000141dheay--agent0507.sandbox.my.salesforce-scrt.com'
+                    }
+                );
+                console.log('initEmbeddedMessaging called');
+            } catch (err) {
+                console.error('Error loading Embedded Messaging: ', err);
+            }
+        }
+
+        function loadEmbeddedMessagingScript() {
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = 'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220/assets/js/bootstrap.min.js';
+            script.onload = initEmbeddedMessaging;
+            script.onerror = function () {
+                console.error('Failed to load bootstrap script.');
+            };
+            document.body.appendChild(script);
+        }
+
+        // ============================================================
+        // ユーティリティ
+        // ============================================================
+        function hideStandardChatButton() {
+            try {
+                if (
+                    window.embeddedservice_bootstrap &&
+                    window.embeddedservice_bootstrap.utilAPI &&
+                    typeof window.embeddedservice_bootstrap.utilAPI.hideChatButton === 'function'
+                ) {
+                    const result = window.embeddedservice_bootstrap.utilAPI.hideChatButton();
+                    if (result && typeof result.then === 'function') {
+                        result
+                            .then(function () { console.log('Standard chat button hidden.'); })
+                            .catch(function (err) { console.warn('hideChatButton failed:', err); });
+                    }
+                }
+            } catch (err) {
+                console.warn('hideStandardChatButton failed:', err);
+            }
+        }
+
+        function hideCustomChatLauncher() {
+            const launcher = document.getElementById('customChatLauncher');
+            if (launcher) {
+                launcher.classList.add('custom-chat-launcher-hidden');
+                console.log('Custom chat launcher hidden.');
+            }
+        }
+
+        function showCustomChatLauncher() {
+            const launcher = document.getElementById('customChatLauncher');
+            if (launcher) {
+                launcher.classList.remove('custom-chat-launcher-hidden');
+                console.log('Custom chat launcher shown.');
+            }
+        }
+
+        function openChat() {
+            console.log('openChat clicked');
+            if (
+                window.embeddedservice_bootstrap &&
+                window.embeddedservice_bootstrap.utilAPI &&
+                typeof window.embeddedservice_bootstrap.utilAPI.launchChat === 'function'
+            ) {
+                window.embeddedservice_bootstrap.utilAPI.launchChat()
+                    .then(function () {
+                        console.log('Chat launched.');
+                        isChatOpen = true;
+                        hideCustomChatLauncher();
+                        hideStandardChatButton();
+                    })
+                    .catch(function (err) {
+                        console.error('launchChat failed:', err);
+                    });
+            } else {
+                console.warn('launchChat API is not ready yet.');
+            }
+        }
+    </script>
 </body>
 </html>

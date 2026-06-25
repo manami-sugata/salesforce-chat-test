@@ -1,31 +1,44 @@
-<script type='text/javascript'>
-  function initEmbeddedMessaging() {
-    try {
-      embeddedservice_bootstrap.settings.language = 'ja';
-      embeddedservice_bootstrap.init(
-        '00DIl000000H31Y',
-        'archi',
-        'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220',
-        {
-          scrt2URL: 'https://d5h00000141dheay--agent0507.sandbox.my.salesforce-scrt.com'
-        }
-      );
-    } catch (err) {
-      console.error('Error loading Embedded Messaging: ', err);
-    }
-  };
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>チャットページ</title>
+</head>
+<body>
+  <h1>チャットページ</h1>
+  <p>ここにページのコンテンツが入ります。</p>
 
-  // チャットの準備ができたら遷移元情報をセット
-  window.addEventListener('onEmbeddedMessagingReady', () => {
-    const referrer = document.referrer;
-    const source = referrer.includes('/mypage') ? 'mypage' : 'other';
+  <script type='text/javascript'>
+    function initEmbeddedMessaging() {
+      try {
+        embeddedservice_bootstrap.settings.language = 'ja';
+        embeddedservice_bootstrap.init(
+          '00DIl000000H31Y',
+          'archi',
+          'https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220',
+          {
+            scrt2URL: 'https://d5h00000141dheay--agent0507.sandbox.my.salesforce-scrt.com'
+          }
+        );
+      } catch (err) {
+        console.error('Error loading Embedded Messaging: ', err);
+      }
+    };
 
-    console.log('Referrer:', referrer || '（なし／直接アクセス）');
-    console.log('SourceCategory:', source);
+    // チャットの準備ができたら遷移元情報をセット
+    window.addEventListener('onEmbeddedMessagingReady', () => {
+      const referrer = document.referrer;
+      const source = referrer.includes('/mypage') ? 'mypage' : 'other';
 
-    embeddedservice_bootstrap.prechatAPI.setHiddenPrechatFields({
-      'SourceCategory': source
+      console.log('Referrer:', referrer || '（なし／直接アクセス）');
+      console.log('SourceCategory:', source);
+
+      embeddedservice_bootstrap.prechatAPI.setHiddenPrechatFields({
+        'SourceCategory': source
+      });
     });
-  });
-</script>
-<script type='text/javascript' src='https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
+  </script>
+  <script type='text/javascript' src='https://d5h00000141dheay--agent0507.sandbox.my.site.com/ESWarchi1780049930220/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
+</body>
+</html>
